@@ -27,15 +27,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Vérification des fichiers du projet
-        run: ls -la
-
       - name: Build et execution des tests unitaires
         run: |
           if [ -f "pom.xml" ]; then
             mvn -B verify
           else
-            echo "Avertissement : pom.xml non trouvé à la racine. Étape de build ignorée pour l'instant."
+            echo "Avertissement : pom.xml non trouvé à la racine."
           fi
 
   # ----------------------------------------------------
@@ -77,16 +74,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build local et scan Trivy
+      - name: Build local et push ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          if [ -f "Dockerfile" ]; then
+          if [ -d "src" ] && [ -f "Dockerfile" ]; then
             docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
             docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           else
-            echo "Avertissement : Dockerfile non trouvé à la racine. Build Docker ignoré."
+            echo "Dossier src/ ou Dockerfile manquant à la racine. Build Docker ignoré pour l'instant."
           fi
