@@ -1,0 +1,10 @@
+# Clés privées et identifiants
+labsuser.pem
+*.pem
+
+# État local Terraform (qu'on va basculer sur S3)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+main.tf.txt
