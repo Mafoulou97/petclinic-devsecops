@@ -12,12 +12,9 @@ provider "aws" {
   region = var.aws_region
 }
 
-# 1. Registre d'images ECR
-resource "aws_ecr_repository" "petclinic_ecr" {
-  name                 = "spring-petclinic"
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+# Variable définissant l'image Docker Hub
+variable "docker_image" {
+  description = "Image Docker hébergée sur Docker Hub"
+  type        = string
+  default     = "mafoulou97/spring-petclinic:v1"
 }
