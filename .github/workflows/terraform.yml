@@ -1,4 +1,4 @@
-name: Terraform CI/CD Pipeline
+name: Terraform CI/CD & Security Pipeline
 
 on:
   push:
@@ -12,8 +12,32 @@ env:
   AWS_REGION: us-east-1
 
 jobs:
+  # ==========================================
+  # JOB 1 : Scan de Sécurité DevSecOps (Trivy)
+  # ==========================================
+  security-scan:
+    name: Security Scan (IaC)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-shortcut-text: 'true'
+          format: 'table'
+          exit-code: '0' # Mettre '1' pour bloquer le pipeline si une faille critique est trouvée
+          severity: 'CRITICAL,HIGH'
+
+  # ==========================================
+  # JOB 2 : Déploiement Infrastructure
+  # ==========================================
   terraform-pipeline:
     name: Build & Deploy Infrastructure
+    needs: security-scan # Attend la validation du scan de sécurité
     runs-on: ubuntu-latest
 
     steps:
