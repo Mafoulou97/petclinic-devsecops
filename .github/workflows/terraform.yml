@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  AWS_REGION: eu-west-3 # Remplace si tu es sur us-east-1 ou autre
+  AWS_REGION: us-east-1
 
 jobs:
   terraform-pipeline:
@@ -17,26 +17,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupération du code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Installation de Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.0
 
-      # 3. Authentification AWS (OBLIGATOIRE avant terraform init)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Indispensable si tu es sur AWS Academy / Learner Lab
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 4. Formatage et Vérification du code Terraform
       - name: Terraform Format Check
         run: terraform fmt -check
 
@@ -46,11 +42,9 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      # 5. Planification (Validation visuelle)
       - name: Terraform Plan
         run: terraform plan -no-color
 
-      # 6. Application des changements (Seulement lors d'un Push sur main)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
