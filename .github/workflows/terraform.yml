@@ -74,10 +74,10 @@ jobs:
         run: terraform apply -auto-approve -lock=false
 
   # ==========================================
-  # JOB 3 : Build & Security Scan de l'Application
+  # JOB 3 : Build, Scan & Push Container sur AWS ECR (Option C)
   # ==========================================
-  app-build-and-scan:
-    name: Build & Scan Container Image
+  app-build-and-push-ecr:
+    name: Build, Scan & Push to AWS ECR
     needs: terraform-pipeline
     runs-on: ubuntu-latest
 
@@ -85,17 +85,48 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build Docker Image
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR Repository Exists
         run: |
-          docker build -t petclinic-app:latest . || echo "Pas de Dockerfile a la racine, build simule"
+          aws ecr describe-repositories --repository-names petclinic-app --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository --repository-name petclinic-app --region ${{ env.AWS_REGION }}
+
+      - name: Build and Tag Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: petclinic-app
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
 
       - name: Run Trivy Container Scan
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: petclinic-app
+          IMAGE_TAG: latest
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'petclinic-app:latest'
+          image-ref: '${{ steps.login-ecr.outputs.registry }}/petclinic-app:latest'
           format: 'table'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+
+      - name: Push Image to Amazon ECR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: petclinic-app
+          IMAGE_TAG: latest
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
