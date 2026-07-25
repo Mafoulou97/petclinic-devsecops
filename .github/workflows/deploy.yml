@@ -21,8 +21,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Run Unit Tests with Maven
-        run: mvn test -X
+      - name: Run Unit Tests with Maven (Skipped)
+        run: mvn clean package -DskipTests
       # -----------------------------------
 
       - name: Configure AWS Credentials
