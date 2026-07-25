@@ -1,10 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "petclinic-tfstate-isi"  # Modifié ici !
-    key            = "setup-aws/terraform.tfstate"
-    region         = "us-east-1"
-    # dynamodb_table = "petclinic-tf-locks"   <-- Commente cette ligne si la table DynamoDB n'est pas encore créée
-    encrypt        = true
+    bucket  = "petclinic-tfstate-isi"
+    key     = "setup-aws/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
   }
 }
 
@@ -16,7 +15,7 @@ provider "aws" {
 }
 
 data "aws_s3_bucket" "tf_state" {
-  bucket = "petclinic-tfstate-isi"  # Modifié ici aussi !
+  bucket = "petclinic-tfstate-isi"
 }
 
 resource "aws_dynamodb_table" "tf_locks" {
