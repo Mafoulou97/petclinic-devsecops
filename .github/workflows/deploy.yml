@@ -22,7 +22,7 @@ jobs:
           java-version: '17'
 
       - name: Run Unit Tests with Maven
-        run: mvn test
+        run: mvn test -X
       # -----------------------------------
 
       - name: Configure AWS Credentials
